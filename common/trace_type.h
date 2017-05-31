@@ -89,6 +89,7 @@ typedef struct {
     sds *args;                  /* arguments represent string */
     sds retval;                 /* return value represent string */
 
+    int64_t abs_time;           /* absolute wall time */
     int64_t inc_time;           /* inclusive wall time */
     int64_t exc_time;           /* exclusive wall time */
 } pt_frame_t;

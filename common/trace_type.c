@@ -60,6 +60,7 @@ size_t pt_type_len_frame(pt_frame_t *frame)
     }
     size += LEN_SDS(frame->retval);                           /* retval */
 
+    size += sizeof(int64_t);                                  /* abs_time */
     size += sizeof(int64_t);                                  /* inc_time */
     size += sizeof(int64_t);                                  /* exc_time */
 
@@ -87,6 +88,7 @@ size_t pt_type_pack_frame(pt_frame_t *frame, char *buf)
     }
     PACK_SDS(buf, frame->retval);
 
+    PACK(buf, int64_t, frame->abs_time);
     PACK(buf, int64_t, frame->inc_time);
     PACK(buf, int64_t, frame->exc_time);
 
@@ -120,6 +122,7 @@ size_t pt_type_unpack_frame(pt_frame_t *frame, char *buf)
     }
     UNPACK_SDS(buf, frame->retval);
 
+    UNPACK(buf, int64_t, frame->abs_time);
     UNPACK(buf, int64_t, frame->inc_time);
     UNPACK(buf, int64_t, frame->exc_time);
 
@@ -218,7 +221,7 @@ void pt_type_display_frame(pt_frame_t *frame, int indent, const char *format, ..
     }
 
     if (frame->type == PT_FRAME_EXIT) {
-        printf(" ~ %.3fs %.3fs\n", frame->inc_time / 1000000.0, frame->exc_time / 1000000.0);
+        printf(" ~ %.3fs %.3fs %.6f\n", frame->inc_time / 1000000.0, frame->exc_time / 1000000.0, frame->abs_time / 1000000.0);
     } else {
         printf("\n");
     }

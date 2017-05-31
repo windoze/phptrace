@@ -1301,6 +1301,7 @@ ZEND_API void pt_execute_core(int internal, zend_execute_data *execute_data, zva
         }
 
         frame.inc_time = pt_time_usec();
+        frame.abs_time = frame.inc_time;
     }
 
     /* Call original under zend_try. baitout will be called when exit(), error
