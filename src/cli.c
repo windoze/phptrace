@@ -109,8 +109,8 @@ void context_init(void)
 
     pt_filter_ctr(&clictx.pft);
 
-    clictx.limit.frame = PT_LIMIT_UNLIMITED; 
-    clictx.limit.request = PT_LIMIT_UNLIMITED; 
+    clictx.limit.frame = PT_LIMIT_UNLIMITED;
+    clictx.limit.request = PT_LIMIT_UNLIMITED;
 }
 
 void context_show(void)
@@ -192,12 +192,14 @@ void parse_args(int argc, char **argv)
     enum {
         FILTER_TYPE = 0,
         FILTER_CONTENT,
+        FILTER_EXCLUSION,
         FILTER_COUNT,
     };
 
     char *const filter_token[] = {
         [FILTER_TYPE]       = "type",
         [FILTER_CONTENT]    = "content",
+        [FILTER_EXCLUSION]    = "exclusion",
         NULL
     };
 
@@ -258,6 +260,13 @@ void parse_args(int argc, char **argv)
                             }
                             sdscpy(clictx.pft.content, sub_value);
                             break;
+                        case FILTER_EXCLUSION:
+                            if (strlen(sub_value) >= MAX_FILTER_LENGTH - 1) {
+                               pt_error("Invalid filter exclusion size overflow");
+                               exit(EXIT_FAILURE);
+                            }
+                            sdscpy(clictx.pft.exclusion, sub_value);
+                            break;
                         default:
                             pt_error("Invalid filter param \"%s\"", sub_value);
                             exit(EXIT_FAILURE);
@@ -267,7 +276,7 @@ void parse_args(int argc, char **argv)
                 if (sdslen(clictx.pft.content) == 0 || clictx.pft.type == PT_FILTER_EMPTY) {
                     pt_error("Invalid filter param , content or type is empty");
                     exit(EXIT_FAILURE);
-                } 
+                }
 
                 break;
             case 'l':
@@ -276,7 +285,7 @@ void parse_args(int argc, char **argv)
                     pt_error("Invalid limit \"%s\"", optarg);
                     exit(EXIT_FAILURE);
                 }
-                
+
                 break;
             case 'h':
                 usage_full();
@@ -314,7 +323,7 @@ void parse_args(int argc, char **argv)
         if (clictx.pft.type & PT_FILTER_URL) {
             clictx.limit.request = limit;
         } else {
-            clictx.limit.frame = limit; 
+            clictx.limit.frame = limit;
         }
     }
 }

@@ -30,7 +30,7 @@ filter_map_t filter_name_map_type[] = {
 void pt_filter_search_filter_type(char *type_name, uint8_t *filter_type)
 {
     if (type_name != NULL && type_name[0] == '\0') {
-        return; 
+        return;
     }
     size_t n = sizeof(filter_name_map_type)/sizeof(filter_map_t);
     int i = 0;
@@ -47,6 +47,7 @@ int pt_filter_pack_filter_msg(pt_filter_t *filter, char *buf)
     char *org = buf;
     PACK(buf, uint8_t, filter->type);
     PACK_SDS(buf, filter->content);
+    PACK_SDS(buf, filter->exclusion);
     return buf - org;
 }
 
@@ -56,22 +57,30 @@ int pt_filter_unpack_filter_msg(pt_filter_t *filter, char *buf)
     size_t len;
     UNPACK(buf, uint8_t, filter->type);
     UNPACK_SDS(buf, filter->content);
+    UNPACK_SDS(buf, filter->exclusion);
     return buf - org;
 }
 
-void pt_filter_ctr(pt_filter_t *filter) 
+void pt_filter_ctr(pt_filter_t *filter)
 {
     filter->type = PT_FILTER_EMPTY;
     if (filter->content == NULL) {
-        filter->content = sdsempty();   
+        filter->content = sdsempty();
+    }
+    if (filter->exclusion == NULL) {
+        filter->exclusion = sdsempty();
     }
 }
 
-void pt_filter_dtr(pt_filter_t *filter) 
+void pt_filter_dtr(pt_filter_t *filter)
 {
     if (filter->content != NULL) {
-        sdsfree(filter->content);   
+        sdsfree(filter->content);
     }
     filter->content = NULL;
+    if (filter->exclusion != NULL) {
+        sdsfree(filter->exclusion);
+    }
+    filter->exclusion = NULL;
     filter->type = PT_FILTER_EMPTY;
 }

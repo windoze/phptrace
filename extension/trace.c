@@ -91,6 +91,7 @@ typedef unsigned long zend_uintptr_t;
 ZEND_BEGIN_ARG_INFO(trace_set_filter_arginfo, 0)
         ZEND_ARG_INFO(0, filter_type)
         ZEND_ARG_INFO(0, filter_content)
+        ZEND_ARG_INFO(0, filter_exclusion)
 ZEND_END_ARG_INFO()
 
 
@@ -341,7 +342,7 @@ PHP_RINIT_FUNCTION(trace)
     if (CTRL_IS_ACTIVE()) {
         handle_command();
     }
-    
+
     /* Filter url */
     if (PTG(pft).type & PT_FILTER_URL) {
         if (strstr(SG(request_info).request_uri, PTG(pft.content)) != NULL) {
@@ -554,24 +555,28 @@ PHP_FUNCTION(trace_set_filter)
 #if PHP_VERSION_ID < 70000
     char *filter_content;
     int filter_content_len;
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ls", &filter_type, &filter_content, &filter_content_len) == FAILURE) {
-        RETURN_FALSE;   
+    char *filter_exclusion=NULL;
+    int filter_exclusion_len=0;
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ls|s", &filter_type, &filter_content, &filter_content_len, &filter_exclusion, &filter_exclusion_len) == FAILURE) {
+        RETURN_FALSE;
     }
 #else
     zend_string *filter_content;
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lS", &filter_type, &filter_content) == FAILURE) {
-        RETURN_FALSE;   
+    zend_string *filter_exclusion=zend_empty_string;
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lS|S", &filter_type, &filter_content, &filter_exclusion) == FAILURE) {
+        RETURN_FALSE;
     }
 
 #endif
 
     if (filter_type == PT_FILTER_EMPTY) {
-        RETURN_FALSE;   
-    }   
+        RETURN_FALSE;
+    }
 
     pt_filter_ctr(&PTG(pft));
     PTG(pft).type = filter_type;
     PTG(pft).content = sdsnewlen(P7_STR(filter_content), P7_STR_LEN(filter_content));
+    PTG(pft).exclusion = sdsnewlen(P7_STR(filter_exclusion), P7_STR_LEN(filter_exclusion));
     RETURN_TRUE;
 }
 #endif
@@ -595,23 +600,27 @@ static inline zend_function *obtain_zend_function(zend_bool internal, zend_execu
 #endif
 }
 
-/** 
+/**
  * Filter frame by functin and class name
  * -------------------
  */
 static long filter_frame(zend_bool internal, zend_execute_data *ex, zend_op_array *op_array TSRMLS_DC)
 {
-    long dotrace = PTG(dotrace); 
-    
+    long dotrace = PTG(dotrace);
+
     if (PTG(pft).type & (PT_FILTER_FUNCTION_NAME | PT_FILTER_CLASS_NAME)) {
 
         zend_function *zf = obtain_zend_function(internal, ex, op_array);
-        
+
         dotrace = 0;
-        
+
         /* Filter function */
         if ((PTG(pft).type & PT_FILTER_FUNCTION_NAME)) {
             if((zf->common.function_name) && strstr(P7_STR(zf->common.function_name), PTG(pft).content) != NULL) {
+                if((PTG(pft).exclusion) && PTG(pft).exclusion[0] && strstr(P7_STR(zf->common.function_name), PTG(pft).exclusion)) {
+                    return 0;
+                }
+                if((PTG(pft).exclusion) && PTG(pft).exclusion[0] && P7_STR(zf->common.function_name)[0]=='_' && P7_STR(zf->common.function_name)[1]=='_')
                 dotrace = PTG(dotrace);
             }
         }
@@ -619,6 +628,9 @@ static long filter_frame(zend_bool internal, zend_execute_data *ex, zend_op_arra
         /* Filter class */
         if ((PTG(pft).type & PT_FILTER_CLASS_NAME)) {
             if ( (zf->common.scope)  && (zf->common.scope->name) && (strstr(P7_STR(zf->common.scope->name), PTG(pft).content) != NULL)) {
+                if((PTG(pft).exclusion) && PTG(pft).exclusion[0] && strstr(P7_STR(zf->common.scope->name), PTG(pft).exclusion)) {
+                    return 0;
+                }
                 dotrace = PTG(dotrace);
             }
         }

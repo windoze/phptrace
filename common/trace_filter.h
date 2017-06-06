@@ -39,6 +39,7 @@ typedef struct  {
 typedef struct {
     uint8_t type;                          /* filter type */
     sds content;                           /* filter content */
+    sds exclusion;                         /* filter content */
 }pt_filter_t;
 
 /* Filter function */
@@ -46,5 +47,5 @@ int pt_filter_pack_filter_msg(pt_filter_t *filter, char *buf);
 int pt_filter_unpack_filter_msg(pt_filter_t *filter, char *buf);
 void pt_filter_search_filter_type(char *type_name, uint8_t *filter_type);
 void pt_filter_ctr(pt_filter_t *filter);
-void pt_filter_dtr(pt_filter_t *filter); 
+void pt_filter_dtr(pt_filter_t *filter);
 #endif
