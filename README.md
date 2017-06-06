@@ -95,7 +95,7 @@ Just try `php example.php`.
 * -p        specify php process id ('all' to trace all processes)
 * -h        show helper
 * -v        same as version
-* -f        filter data by type(url,function,class) and content
+* -f        filter data by type(url,function,class), content, and exclusion
 * -l        limit output count
 * --ptrace  in status mode fetch data using ptrace
 
