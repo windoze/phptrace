@@ -617,10 +617,10 @@ static long filter_frame(zend_bool internal, zend_execute_data *ex, zend_op_arra
         /* Filter function */
         if ((PTG(pft).type & PT_FILTER_FUNCTION_NAME)) {
             if((zf->common.function_name) && strstr(P7_STR(zf->common.function_name), PTG(pft).content) != NULL) {
+                /* Function exclusion */
                 if((PTG(pft).exclusion) && PTG(pft).exclusion[0] && strstr(P7_STR(zf->common.function_name), PTG(pft).exclusion)) {
                     return 0;
                 }
-                if((PTG(pft).exclusion) && PTG(pft).exclusion[0] && P7_STR(zf->common.function_name)[0]=='_' && P7_STR(zf->common.function_name)[1]=='_')
                 dotrace = PTG(dotrace);
             }
         }
@@ -628,11 +628,17 @@ static long filter_frame(zend_bool internal, zend_execute_data *ex, zend_op_arra
         /* Filter class */
         if ((PTG(pft).type & PT_FILTER_CLASS_NAME)) {
             if ( (zf->common.scope)  && (zf->common.scope->name) && (strstr(P7_STR(zf->common.scope->name), PTG(pft).content) != NULL)) {
+                /* Scope/Class exclusion */
                 if((PTG(pft).exclusion) && PTG(pft).exclusion[0] && strstr(P7_STR(zf->common.scope->name), PTG(pft).exclusion)) {
                     return 0;
                 }
                 dotrace = PTG(dotrace);
             }
+        }
+
+        /* Exclude constructor and destructor if any exclusion is set */
+        if((PTG(pft).exclusion) && PTG(pft).exclusion[0] && (zf->common.function_name) && P7_STR(zf->common.function_name)[0]=='_' && P7_STR(zf->common.function_name)[1]=='_') {
+            return 0;
         }
     }
 
