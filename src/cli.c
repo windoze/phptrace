@@ -258,14 +258,14 @@ void parse_args(int argc, char **argv)
                                pt_error("Invalid filter content size overflow");
                                exit(EXIT_FAILURE);
                             }
-                            sdscpy(clictx.pft.content, sub_value);
+                            clictx.pft.content=sdscpy(clictx.pft.content, sub_value);
                             break;
                         case FILTER_EXCLUSION:
                             if (strlen(sub_value) >= MAX_FILTER_LENGTH - 1) {
                                pt_error("Invalid filter exclusion size overflow");
                                exit(EXIT_FAILURE);
                             }
-                            sdscpy(clictx.pft.exclusion, sub_value);
+                            clictx.pft.exclusion=sdscpy(clictx.pft.exclusion, sub_value);
                             break;
                         default:
                             pt_error("Invalid filter param \"%s\"", sub_value);
